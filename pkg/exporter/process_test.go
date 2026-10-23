@@ -965,3 +965,17 @@ func TestCalculateMaxMsgSize(t *testing.T) {
 		})
 	}
 }
+
+func TestInitExportingProcessDialTimeout(t *testing.T) {
+	// 192.0.2.1 is in TEST-NET-1 (RFC 5737) and is not routable: the SYN gets no answer, so the
+	// dial can only end by timing out. Without DialTimeout it would take over 2 minutes.
+	start := time.Now()
+	_, err := InitExportingProcess(ExporterInput{
+		CollectorAddress:    "192.0.2.1:4739",
+		CollectorProtocol:   "tcp",
+		ObservationDomainID: 1,
+		DialTimeout:         100 * time.Millisecond,
+	})
+	require.Error(t, err)
+	assert.Less(t, time.Since(start), 5*time.Second, "dial did not honor DialTimeout")
+}
